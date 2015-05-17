@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "emitDecoratorMetadata": true,
+        "module": "commonjs",
+        "target": "es5"
+    },
+    "files": [
+        "src/app.ts",
+        "src/components/base/base.ts",
+        "src/components/dashboard/dashboard.ts",
+        "src/components/login/login.ts",
+        "typings/tsd.d.ts"
+    ]
+}
