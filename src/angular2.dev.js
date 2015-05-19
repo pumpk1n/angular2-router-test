@@ -7352,7 +7352,17 @@ System.register("angular2/src/facade/lang", [], function($__export) {
           }});
       }());
       $__export("FunctionWrapper", FunctionWrapper);
-      Json = _global.JSON;
+      Json = (function() {
+        function Json() {}
+        return ($traceurRuntime.createClass)(Json, {}, {
+          parse: function(s) {
+            return _global.JSON.parse(s);
+          },
+          stringify: function(data) {
+            return _global.JSON.stringify(data, null, 2);
+          }
+        });
+      }());
       $__export("Json", Json);
       DateWrapper = (function() {
         function DateWrapper() {}
@@ -7942,9 +7952,16 @@ System.register("angular2/src/reflection/reflection_capabilities", ["angular2/sr
             throw new Error("Factory cannot take more than 10 arguments");
           },
           _zipTypesAndAnnotaions: function(paramTypes, paramAnnotations) {
-            var result = ListWrapper.createFixedSize(paramTypes.length);
+            var result;
+            if (typeof paramTypes === 'undefined') {
+              result = ListWrapper.createFixedSize(paramAnnotations.length);
+            } else {
+              result = ListWrapper.createFixedSize(paramTypes.length);
+            }
             for (var i = 0; i < result.length; i++) {
-              if (paramTypes[i] != Object) {
+              if (typeof paramTypes === 'undefined') {
+                result[i] = [];
+              } else if (paramTypes[i] != Object) {
                 result[i] = [paramTypes[i]];
               } else {
                 result[i] = [];
@@ -8434,7 +8451,7 @@ System.register("angular2/src/change_detection/change_detection_jit_generator", 
     for (var i = 0; i < detectorFieldNames.length; ++i) {
       detectorInit += (detectorFieldNames[i] + " = directives.getDetectorFor(this.directiveRecords[" + i + "].directiveIndex);\n");
     }
-    return ("\n" + type + ".prototype.hydrate = function(context, locals, directives) {\n  " + MODE_ACCESSOR + " = \"" + mode + "\";\n  " + CONTEXT_ACCESSOR + " = context;\n  " + LOCALS_ACCESSOR + " = locals;\n  " + directiveInit + "\n  " + detectorInit + "\n}\n" + type + ".prototype.dehydrate = function() {\n  " + pipeOnDestroy + "\n  " + fieldDefinitions + "\n  " + LOCALS_ACCESSOR + " = null;\n}\n" + type + ".prototype.hydrated = function() {\n  return " + CONTEXT_ACCESSOR + " !== " + UTIL + ".unitialized();\n}\n");
+    return ("\n" + type + ".prototype.hydrate = function(context, locals, directives) {\n  " + MODE_ACCESSOR + " = \"" + mode + "\";\n  " + CONTEXT_ACCESSOR + " = context;\n  " + LOCALS_ACCESSOR + " = locals;\n  " + directiveInit + "\n  " + detectorInit + "\n}\n" + type + ".prototype.dehydrate = function() {\n  " + pipeOnDestroy + "\n  " + fieldDefinitions + "\n  " + LOCALS_ACCESSOR + " = null;\n}\n" + type + ".prototype.hydrated = function() {\n  return " + CONTEXT_ACCESSOR + " !== " + UTIL + ".uninitialized();\n}\n");
   }
   function detectChangesTemplate(type, body) {
     return ("\n" + type + ".prototype.detectChangesInRecords = function(throwOnChange) {\n  " + body + "\n}\n");
@@ -8449,7 +8466,7 @@ System.register("angular2/src/change_detection/change_detection_jit_generator", 
     return ("\n" + localDefinitions + "\n" + changeDefinitions + "\nvar " + TEMP_LOCAL + ";\nvar " + IS_CHANGED_LOCAL + " = false;\nvar " + CURRENT_PROTO + ";\nvar " + CHANGES_LOCAL + " = null;\n\ncontext = " + CONTEXT_ACCESSOR + ";\n" + records + "\n");
   }
   function pipeCheckTemplate(protoIndex, context, bindingPropagationConfig, pipe, pipeType, oldValue, newValue, change, update, addToChanges, lastInDirective) {
-    return ("\n" + CURRENT_PROTO + " = " + PROTOS_ACCESSOR + "[" + protoIndex + "];\nif (" + pipe + " === " + UTIL + ".unitialized()) {\n  " + pipe + " = " + PIPE_REGISTRY_ACCESSOR + ".get('" + pipeType + "', " + context + ", " + bindingPropagationConfig + ");\n} else if (!" + pipe + ".supports(" + context + ")) {\n  " + pipe + ".onDestroy();\n  " + pipe + " = " + PIPE_REGISTRY_ACCESSOR + ".get('" + pipeType + "', " + context + ", " + bindingPropagationConfig + ");\n}\n\n" + newValue + " = " + pipe + ".transform(" + context + ");\nif (" + oldValue + " !== " + newValue + ") {\n  " + newValue + " = " + UTIL + ".unwrapValue(" + newValue + ");\n  " + change + " = true;\n  " + update + "\n  " + addToChanges + "\n  " + oldValue + " = " + newValue + ";\n}\n" + lastInDirective + "\n");
+    return ("\n" + CURRENT_PROTO + " = " + PROTOS_ACCESSOR + "[" + protoIndex + "];\nif (" + pipe + " === " + UTIL + ".uninitialized()) {\n  " + pipe + " = " + PIPE_REGISTRY_ACCESSOR + ".get('" + pipeType + "', " + context + ", " + bindingPropagationConfig + ");\n} else if (!" + pipe + ".supports(" + context + ")) {\n  " + pipe + ".onDestroy();\n  " + pipe + " = " + PIPE_REGISTRY_ACCESSOR + ".get('" + pipeType + "', " + context + ", " + bindingPropagationConfig + ");\n}\n\n" + newValue + " = " + pipe + ".transform(" + context + ");\nif (" + oldValue + " !== " + newValue + ") {\n  " + newValue + " = " + UTIL + ".unwrapValue(" + newValue + ");\n  " + change + " = true;\n  " + update + "\n  " + addToChanges + "\n  " + oldValue + " = " + newValue + ";\n}\n" + lastInDirective + "\n");
   }
   function referenceCheckTemplate(protoIndex, assignment, oldValue, newValue, change, update, addToChanges, lastInDirective) {
     return ("\n" + CURRENT_PROTO + " = " + PROTOS_ACCESSOR + "[" + protoIndex + "];\n" + assignment + "\nif (" + newValue + " !== " + oldValue + " || (" + newValue + " !== " + newValue + ") && (" + oldValue + " !== " + oldValue + ")) {\n  " + change + " = true;\n  " + update + "\n  " + addToChanges + "\n  " + oldValue + " = " + newValue + ";\n}\n" + lastInDirective + "\n");
@@ -8469,7 +8486,7 @@ System.register("angular2/src/change_detection/change_detection_jit_generator", 
   }
   function fieldDefinitionsTemplate(names) {
     return names.map((function(n) {
-      return (n + " = " + UTIL + ".unitialized();");
+      return (n + " = " + UTIL + ".uninitialized();");
     })).join("\n");
   }
   function ifChangedGuardTemplate(changeNames, body) {
@@ -10125,6 +10142,103 @@ System.register("angular2/src/change_detection/pipes/lowercase_pipe", ["angular2
         }, {});
       }());
       $__export("LowerCaseFactory", LowerCaseFactory);
+    }
+  };
+});
+
+System.register("angular2/src/change_detection/pipes/json_pipe", ["angular2/src/facade/lang", "angular2/src/change_detection/pipes/pipe"], function($__export) {
+  "use strict";
+  var __moduleName = "angular2/src/change_detection/pipes/json_pipe";
+  var __decorate,
+      __metadata,
+      isPresent,
+      CONST,
+      Json,
+      Pipe,
+      PipeFactory,
+      __esModule,
+      JsonPipe,
+      JsonPipeFactory;
+  return {
+    setters: [function($__m) {
+      isPresent = $__m.isPresent;
+      CONST = $__m.CONST;
+      Json = $__m.Json;
+    }, function($__m) {
+      Pipe = $__m.Pipe;
+      PipeFactory = $__m.PipeFactory;
+    }],
+    execute: function() {
+      __decorate = (this && this.__decorate) || function(decorators, target, key, desc) {
+        if (typeof Reflect === "object" && typeof Reflect.decorate === "function")
+          return Reflect.decorate(decorators, target, key, desc);
+        switch (arguments.length) {
+          case 2:
+            return decorators.reduceRight(function(o, d) {
+              return (d && d(o)) || o;
+            }, target);
+          case 3:
+            return decorators.reduceRight(function(o, d) {
+              return (d && d(target, key)), void 0;
+            }, void 0);
+          case 4:
+            return decorators.reduceRight(function(o, d) {
+              return (d && d(target, key, o)) || o;
+            }, desc);
+        }
+      };
+      __metadata = (this && this.__metadata) || function(k, v) {
+        if (typeof Reflect === "object" && typeof Reflect.metadata === "function")
+          return Reflect.metadata(k, v);
+      };
+      __esModule = true;
+      $__export("__esModule", __esModule);
+      JsonPipe = (function($__super) {
+        function JsonPipe() {
+          $traceurRuntime.superConstructor(JsonPipe).call(this);
+          this._latestRef = null;
+          this._latestValue = null;
+        }
+        return ($traceurRuntime.createClass)(JsonPipe, {
+          onDestroy: function() {
+            if (isPresent(this._latestValue)) {
+              this._latestRef = null;
+              this._latestValue = null;
+            }
+          },
+          supports: function(obj) {
+            return true;
+          },
+          transform: function(value) {
+            if (value === this._latestRef) {
+              return this._latestValue;
+            } else {
+              return this._prettyPrint(value);
+            }
+          },
+          _prettyPrint: function(value) {
+            this._latestRef = value;
+            this._latestValue = Json.stringify(value);
+            return this._latestValue;
+          }
+        }, {}, $__super);
+      }(Pipe));
+      $__export("JsonPipe", JsonPipe);
+      JsonPipeFactory = (function($__super) {
+        function $__0() {
+          $traceurRuntime.superConstructor($__0).call(this);
+        }
+        return ($traceurRuntime.createClass)($__0, {
+          supports: function(obj) {
+            return true;
+          },
+          create: function(cdRef) {
+            return new JsonPipe();
+          }
+        }, {}, $__super);
+      }(PipeFactory));
+      $__export("JsonPipeFactory", JsonPipeFactory);
+      $__export("JsonPipeFactory", JsonPipeFactory = __decorate([CONST(), __metadata('design:paramtypes', [])], JsonPipeFactory));
     }
   };
 });
@@ -12289,6 +12403,162 @@ System.register("angular2/src/core/compiler/proto_view_factory", ["angular2/src/
       ProtoViewFactory,
       RenderProtoViewWithIndex,
       ParentProtoElementInjectorWithDistance;
+  function getChangeDetectorDefinitions(hostComponentMetadata, rootRenderProtoView, allRenderDirectiveMetadata) {
+    var nestedPvsWithIndex = _collectNestedProtoViews(rootRenderProtoView);
+    var nestedPvVariableBindings = _collectNestedProtoViewsVariableBindings(nestedPvsWithIndex);
+    var nestedPvVariableNames = _collectNestedProtoViewsVariableNames(nestedPvsWithIndex, nestedPvVariableBindings);
+    return _getChangeDetectorDefinitions(hostComponentMetadata, nestedPvsWithIndex, nestedPvVariableNames, allRenderDirectiveMetadata);
+  }
+  function _collectNestedProtoViews(renderProtoView) {
+    var parentIndex = arguments[1] !== (void 0) ? arguments[1] : null;
+    var boundElementIndex = arguments[2] !== (void 0) ? arguments[2] : null;
+    var result = arguments[3] !== (void 0) ? arguments[3] : null;
+    if (isBlank(result)) {
+      result = [];
+    }
+    ListWrapper.push(result, new RenderProtoViewWithIndex(renderProtoView, result.length, parentIndex, boundElementIndex));
+    var currentIndex = result.length - 1;
+    var childBoundElementIndex = 0;
+    ListWrapper.forEach(renderProtoView.elementBinders, (function(elementBinder) {
+      if (isPresent(elementBinder.nestedProtoView)) {
+        _collectNestedProtoViews(elementBinder.nestedProtoView, currentIndex, childBoundElementIndex, result);
+      }
+      childBoundElementIndex++;
+    }));
+    return result;
+  }
+  function _getChangeDetectorDefinitions(hostComponentMetadata, nestedPvsWithIndex, nestedPvVariableNames, allRenderDirectiveMetadata) {
+    return ListWrapper.map(nestedPvsWithIndex, (function(pvWithIndex) {
+      var elementBinders = pvWithIndex.renderProtoView.elementBinders;
+      var bindingRecordsCreator = new BindingRecordsCreator();
+      var bindingRecords = bindingRecordsCreator.getBindingRecords(elementBinders, allRenderDirectiveMetadata);
+      var directiveRecords = bindingRecordsCreator.getDirectiveRecords(elementBinders, allRenderDirectiveMetadata);
+      var strategyName = DEFAULT;
+      var typeString;
+      if (pvWithIndex.renderProtoView.type === renderApi.ProtoViewDto.COMPONENT_VIEW_TYPE) {
+        strategyName = hostComponentMetadata.changeDetection;
+        typeString = 'comp';
+      } else if (pvWithIndex.renderProtoView.type === renderApi.ProtoViewDto.HOST_VIEW_TYPE) {
+        typeString = 'host';
+      } else {
+        typeString = 'embedded';
+      }
+      var id = (hostComponentMetadata.id + "_" + typeString + "_" + pvWithIndex.index);
+      var variableNames = nestedPvVariableNames[pvWithIndex.index];
+      return new ChangeDetectorDefinition(id, strategyName, variableNames, bindingRecords, directiveRecords);
+    }));
+  }
+  function _createAppProtoView(renderProtoView, protoChangeDetector, variableBindings, allDirectives) {
+    var elementBinders = renderProtoView.elementBinders;
+    var protoView = new AppProtoView(renderProtoView.render, protoChangeDetector, variableBindings);
+    _createElementBinders(protoView, elementBinders, allDirectives);
+    _bindDirectiveEvents(protoView, elementBinders);
+    return protoView;
+  }
+  function _collectNestedProtoViewsVariableBindings(nestedPvsWithIndex) {
+    return ListWrapper.map(nestedPvsWithIndex, (function(pvWithIndex) {
+      return _createVariableBindings(pvWithIndex.renderProtoView);
+    }));
+  }
+  function _createVariableBindings(renderProtoView) {
+    var variableBindings = MapWrapper.create();
+    MapWrapper.forEach(renderProtoView.variableBindings, (function(mappedName, varName) {
+      MapWrapper.set(variableBindings, varName, mappedName);
+    }));
+    ListWrapper.forEach(renderProtoView.elementBinders, (function(binder) {
+      MapWrapper.forEach(binder.variableBindings, (function(mappedName, varName) {
+        MapWrapper.set(variableBindings, varName, mappedName);
+      }));
+    }));
+    return variableBindings;
+  }
+  function _collectNestedProtoViewsVariableNames(nestedPvsWithIndex, nestedPvVariableBindings) {
+    var nestedPvVariableNames = ListWrapper.createFixedSize(nestedPvsWithIndex.length);
+    ListWrapper.forEach(nestedPvsWithIndex, (function(pvWithIndex) {
+      var parentVariableNames = isPresent(pvWithIndex.parentIndex) ? nestedPvVariableNames[pvWithIndex.parentIndex] : null;
+      nestedPvVariableNames[pvWithIndex.index] = _createVariableNames(parentVariableNames, nestedPvVariableBindings[pvWithIndex.index]);
+    }));
+    return nestedPvVariableNames;
+  }
+  function _createVariableNames(parentVariableNames, variableBindings) {
+    var variableNames = isPresent(parentVariableNames) ? ListWrapper.clone(parentVariableNames) : [];
+    MapWrapper.forEach(variableBindings, (function(local, v) {
+      ListWrapper.push(variableNames, local);
+    }));
+    return variableNames;
+  }
+  function _createElementBinders(protoView, elementBinders, allDirectiveBindings) {
+    for (var i = 0; i < elementBinders.length; i++) {
+      var renderElementBinder = elementBinders[i];
+      var dirs = elementBinders[i].directives;
+      var parentPeiWithDistance = _findParentProtoElementInjectorWithDistance(i, protoView.elementBinders, elementBinders);
+      var directiveBindings = ListWrapper.map(dirs, (function(dir) {
+        return allDirectiveBindings[dir.directiveIndex];
+      }));
+      var componentDirectiveBinding = null;
+      if (directiveBindings.length > 0) {
+        if (directiveBindings[0].metadata.type === renderApi.DirectiveMetadata.COMPONENT_TYPE) {
+          componentDirectiveBinding = directiveBindings[0];
+        }
+      }
+      var protoElementInjector = _createProtoElementInjector(i, parentPeiWithDistance, renderElementBinder, componentDirectiveBinding, directiveBindings);
+      _createElementBinder(protoView, i, renderElementBinder, protoElementInjector, componentDirectiveBinding);
+    }
+  }
+  function _findParentProtoElementInjectorWithDistance(binderIndex, elementBinders, renderElementBinders) {
+    var distance = 0;
+    do {
+      var renderElementBinder = renderElementBinders[binderIndex];
+      binderIndex = renderElementBinder.parentIndex;
+      if (binderIndex !== -1) {
+        distance += renderElementBinder.distanceToParent;
+        var elementBinder = elementBinders[binderIndex];
+        if (isPresent(elementBinder.protoElementInjector)) {
+          return new ParentProtoElementInjectorWithDistance(elementBinder.protoElementInjector, distance);
+        }
+      }
+    } while (binderIndex !== -1);
+    return new ParentProtoElementInjectorWithDistance(null, -1);
+  }
+  function _createProtoElementInjector(binderIndex, parentPeiWithDistance, renderElementBinder, componentDirectiveBinding, directiveBindings) {
+    var protoElementInjector = null;
+    var hasVariables = MapWrapper.size(renderElementBinder.variableBindings) > 0;
+    if (directiveBindings.length > 0 || hasVariables) {
+      protoElementInjector = new ProtoElementInjector(parentPeiWithDistance.protoElementInjector, binderIndex, directiveBindings, isPresent(componentDirectiveBinding), parentPeiWithDistance.distance);
+      protoElementInjector.attributes = renderElementBinder.readAttributes;
+      if (hasVariables) {
+        protoElementInjector.exportComponent = isPresent(componentDirectiveBinding);
+        protoElementInjector.exportElement = isBlank(componentDirectiveBinding);
+        var exportImplicitName = MapWrapper.get(renderElementBinder.variableBindings, '\$implicit');
+        if (isPresent(exportImplicitName)) {
+          protoElementInjector.exportImplicitName = exportImplicitName;
+        }
+      }
+    }
+    return protoElementInjector;
+  }
+  function _createElementBinder(protoView, boundElementIndex, renderElementBinder, protoElementInjector, componentDirectiveBinding) {
+    var parent = null;
+    if (renderElementBinder.parentIndex !== -1) {
+      parent = protoView.elementBinders[renderElementBinder.parentIndex];
+    }
+    var elBinder = protoView.bindElement(parent, renderElementBinder.distanceToParent, protoElementInjector, componentDirectiveBinding);
+    protoView.bindEvent(renderElementBinder.eventBindings, boundElementIndex, -1);
+    MapWrapper.forEach(renderElementBinder.variableBindings, (function(mappedName, varName) {
+      MapWrapper.set(protoView.protoLocals, mappedName, null);
+    }));
+    return elBinder;
+  }
+  function _bindDirectiveEvents(protoView, elementBinders) {
+    for (var boundElementIndex = 0; boundElementIndex < elementBinders.length; ++boundElementIndex) {
+      var dirs = elementBinders[boundElementIndex].directives;
+      for (var i = 0; i < dirs.length; i++) {
+        var directiveBinder = dirs[i];
+        protoView.bindEvent(directiveBinder.eventBindings, boundElementIndex, i);
+      }
+    }
+  }
+  $__export("getChangeDetectorDefinitions", getChangeDetectorDefinitions);
   return {
     setters: [function($__m) {
       Injectable = $__m.Injectable;
@@ -12328,9 +12598,9 @@ System.register("angular2/src/core/compiler/proto_view_factory", ["angular2/src/
             var bindings = [];
             for (var boundElementIndex = 0; boundElementIndex < elementBinders.length; boundElementIndex++) {
               var renderElementBinder = elementBinders[boundElementIndex];
-              bindings = ListWrapper.concat(bindings, this._createTextNodeRecords(renderElementBinder));
-              bindings = ListWrapper.concat(bindings, this._createElementPropertyRecords(boundElementIndex, renderElementBinder));
-              bindings = ListWrapper.concat(bindings, this._createDirectiveRecords(boundElementIndex, renderElementBinder.directives, allDirectiveMetadatas));
+              this._createTextNodeRecords(bindings, renderElementBinder);
+              this._createElementPropertyRecords(bindings, boundElementIndex, renderElementBinder);
+              this._createDirectiveRecords(bindings, boundElementIndex, renderElementBinder.directives, allDirectiveMetadatas);
             }
             return bindings;
           },
@@ -12344,40 +12614,34 @@ System.register("angular2/src/core/compiler/proto_view_factory", ["angular2/src/
             }
             return directiveRecords;
           },
-          _createTextNodeRecords: function(renderElementBinder) {
+          _createTextNodeRecords: function(bindings, renderElementBinder) {
             var $__0 = this;
             if (isBlank(renderElementBinder.textBindings))
-              return [];
-            return ListWrapper.map(renderElementBinder.textBindings, (function(b) {
-              return BindingRecord.createForTextNode(b, $__0._textNodeIndex++);
+              return ;
+            ListWrapper.forEach(renderElementBinder.textBindings, (function(b) {
+              ListWrapper.push(bindings, BindingRecord.createForTextNode(b, $__0._textNodeIndex++));
             }));
           },
-          _createElementPropertyRecords: function(boundElementIndex, renderElementBinder) {
-            var res = [];
+          _createElementPropertyRecords: function(bindings, boundElementIndex, renderElementBinder) {
             MapWrapper.forEach(renderElementBinder.propertyBindings, (function(astWithSource, propertyName) {
-              ListWrapper.push(res, BindingRecord.createForElement(astWithSource, boundElementIndex, propertyName));
+              ListWrapper.push(bindings, BindingRecord.createForElement(astWithSource, boundElementIndex, propertyName));
             }));
-            return res;
           },
-          _createDirectiveRecords: function(boundElementIndex, directiveBinders, allDirectiveMetadatas) {
+          _createDirectiveRecords: function(bindings, boundElementIndex, directiveBinders, allDirectiveMetadatas) {
             var $__0 = this;
-            var res = [];
             for (var i = 0; i < directiveBinders.length; i++) {
               var directiveBinder = directiveBinders[i];
               var directiveMetadata = allDirectiveMetadatas[directiveBinder.directiveIndex];
               MapWrapper.forEach(directiveBinder.propertyBindings, (function(astWithSource, propertyName) {
                 var setter = reflector.setter(propertyName);
                 var directiveRecord = $__0._getDirectiveRecord(boundElementIndex, i, directiveMetadata);
-                var b = BindingRecord.createForDirective(astWithSource, propertyName, setter, directiveRecord);
-                ListWrapper.push(res, b);
+                ListWrapper.push(bindings, BindingRecord.createForDirective(astWithSource, propertyName, setter, directiveRecord));
               }));
               MapWrapper.forEach(directiveBinder.hostPropertyBindings, (function(astWithSource, propertyName) {
                 var dirIndex = new DirectiveIndex(boundElementIndex, i);
-                var b = BindingRecord.createForHostProperty(dirIndex, astWithSource, propertyName);
-                ListWrapper.push(res, b);
+                ListWrapper.push(bindings, BindingRecord.createForHostProperty(dirIndex, astWithSource, propertyName));
               }));
             }
-            return res;
           },
           _getDirectiveRecord: function(boundElementIndex, directiveIndex, directiveMetadata) {
             var id = boundElementIndex * 100 + directiveIndex;
@@ -12396,13 +12660,13 @@ System.register("angular2/src/core/compiler/proto_view_factory", ["angular2/src/
           return [[assert.genericType(List, renderApi.ElementBinder)], [assert.genericType(List, renderApi.DirectiveMetadata)]];
         }});
       Object.defineProperty(BindingRecordsCreator.prototype._createTextNodeRecords, "parameters", {get: function() {
-          return [[renderApi.ElementBinder]];
+          return [[assert.genericType(List, BindingRecord)], [renderApi.ElementBinder]];
         }});
       Object.defineProperty(BindingRecordsCreator.prototype._createElementPropertyRecords, "parameters", {get: function() {
-          return [[assert.type.number], [renderApi.ElementBinder]];
+          return [[assert.genericType(List, BindingRecord)], [assert.type.number], [renderApi.ElementBinder]];
         }});
       Object.defineProperty(BindingRecordsCreator.prototype._createDirectiveRecords, "parameters", {get: function() {
-          return [[assert.type.number], [assert.genericType(List, renderApi.DirectiveBinder)], [assert.genericType(List, renderApi.DirectiveMetadata)]];
+          return [[assert.genericType(List, BindingRecord)], [assert.type.number], [assert.genericType(List, renderApi.DirectiveBinder)], [assert.genericType(List, renderApi.DirectiveMetadata)]];
         }});
       Object.defineProperty(BindingRecordsCreator.prototype._getDirectiveRecord, "parameters", {get: function() {
           return [[assert.type.number], [assert.type.number], [renderApi.DirectiveMetadata]];
@@ -12411,28 +12675,21 @@ System.register("angular2/src/core/compiler/proto_view_factory", ["angular2/src/
         function ProtoViewFactory(changeDetection) {
           this._changeDetection = changeDetection;
         }
-        return ($traceurRuntime.createClass)(ProtoViewFactory, {
-          getChangeDetectorDefinitions: function(hostComponentMetadata, rootRenderProtoView, allRenderDirectiveMetadata) {
-            var nestedPvsWithIndex = this._collectNestedProtoViews(rootRenderProtoView);
-            var nestedPvVariableBindings = this._collectNestedProtoViewsVariableBindings(nestedPvsWithIndex);
-            var nestedPvVariableNames = this._collectNestedProtoViewsVariableNames(nestedPvsWithIndex, nestedPvVariableBindings);
-            return this._getChangeDetectorDefinitions(hostComponentMetadata, nestedPvsWithIndex, nestedPvVariableNames, allRenderDirectiveMetadata);
-          },
-          createAppProtoViews: function(hostComponentBinding, rootRenderProtoView, allDirectives) {
+        return ($traceurRuntime.createClass)(ProtoViewFactory, {createAppProtoViews: function(hostComponentBinding, rootRenderProtoView, allDirectives) {
             var $__0 = this;
             var allRenderDirectiveMetadata = ListWrapper.map(allDirectives, (function(directiveBinding) {
               return directiveBinding.metadata;
             }));
-            var nestedPvsWithIndex = this._collectNestedProtoViews(rootRenderProtoView);
-            var nestedPvVariableBindings = this._collectNestedProtoViewsVariableBindings(nestedPvsWithIndex);
-            var nestedPvVariableNames = this._collectNestedProtoViewsVariableNames(nestedPvsWithIndex, nestedPvVariableBindings);
-            var changeDetectorDefs = this._getChangeDetectorDefinitions(hostComponentBinding.metadata, nestedPvsWithIndex, nestedPvVariableNames, allRenderDirectiveMetadata);
+            var nestedPvsWithIndex = _collectNestedProtoViews(rootRenderProtoView);
+            var nestedPvVariableBindings = _collectNestedProtoViewsVariableBindings(nestedPvsWithIndex);
+            var nestedPvVariableNames = _collectNestedProtoViewsVariableNames(nestedPvsWithIndex, nestedPvVariableBindings);
+            var changeDetectorDefs = _getChangeDetectorDefinitions(hostComponentBinding.metadata, nestedPvsWithIndex, nestedPvVariableNames, allRenderDirectiveMetadata);
             var protoChangeDetectors = ListWrapper.map(changeDetectorDefs, (function(changeDetectorDef) {
               return $__0._changeDetection.createProtoChangeDetector(changeDetectorDef);
             }));
             var appProtoViews = ListWrapper.createFixedSize(nestedPvsWithIndex.length);
             ListWrapper.forEach(nestedPvsWithIndex, (function(pvWithIndex) {
-              var appProtoView = $__0._createAppProtoView(pvWithIndex.renderProtoView, protoChangeDetectors[pvWithIndex.index], nestedPvVariableBindings[pvWithIndex.index], allDirectives);
+              var appProtoView = _createAppProtoView(pvWithIndex.renderProtoView, protoChangeDetectors[pvWithIndex.index], nestedPvVariableBindings[pvWithIndex.index], allDirectives);
               if (isPresent(pvWithIndex.parentIndex)) {
                 var parentView = appProtoViews[pvWithIndex.parentIndex];
                 parentView.elementBinders[pvWithIndex.boundElementIndex].nestedProtoView = appProtoView;
@@ -12440,160 +12697,7 @@ System.register("angular2/src/core/compiler/proto_view_factory", ["angular2/src/
               appProtoViews[pvWithIndex.index] = appProtoView;
             }));
             return appProtoViews;
-          },
-          _collectNestedProtoViews: function(renderProtoView) {
-            var parentIndex = arguments[1] !== (void 0) ? arguments[1] : null;
-            var boundElementIndex = arguments[2] !== (void 0) ? arguments[2] : null;
-            var result = arguments[3] !== (void 0) ? arguments[3] : null;
-            var $__0 = this;
-            if (isBlank(result)) {
-              result = [];
-            }
-            ListWrapper.push(result, new RenderProtoViewWithIndex(renderProtoView, result.length, parentIndex, boundElementIndex));
-            var currentIndex = result.length - 1;
-            var childBoundElementIndex = 0;
-            ListWrapper.forEach(renderProtoView.elementBinders, (function(elementBinder) {
-              if (isPresent(elementBinder.nestedProtoView)) {
-                $__0._collectNestedProtoViews(elementBinder.nestedProtoView, currentIndex, childBoundElementIndex, result);
-              }
-              childBoundElementIndex++;
-            }));
-            return result;
-          },
-          _getChangeDetectorDefinitions: function(hostComponentMetadata, nestedPvsWithIndex, nestedPvVariableNames, allRenderDirectiveMetadata) {
-            return ListWrapper.map(nestedPvsWithIndex, (function(pvWithIndex) {
-              var elementBinders = pvWithIndex.renderProtoView.elementBinders;
-              var bindingRecordsCreator = new BindingRecordsCreator();
-              var bindingRecords = bindingRecordsCreator.getBindingRecords(elementBinders, allRenderDirectiveMetadata);
-              var directiveRecords = bindingRecordsCreator.getDirectiveRecords(elementBinders, allRenderDirectiveMetadata);
-              var strategyName = DEFAULT;
-              var typeString;
-              if (pvWithIndex.renderProtoView.type === renderApi.ProtoViewDto.COMPONENT_VIEW_TYPE) {
-                strategyName = hostComponentMetadata.changeDetection;
-                typeString = 'comp';
-              } else if (pvWithIndex.renderProtoView.type === renderApi.ProtoViewDto.HOST_VIEW_TYPE) {
-                typeString = 'host';
-              } else {
-                typeString = 'embedded';
-              }
-              var id = (hostComponentMetadata.id + "_" + typeString + "_" + pvWithIndex.index);
-              var variableNames = nestedPvVariableNames[pvWithIndex.index];
-              return new ChangeDetectorDefinition(id, strategyName, variableNames, bindingRecords, directiveRecords);
-            }));
-          },
-          _createAppProtoView: function(renderProtoView, protoChangeDetector, variableBindings, allDirectives) {
-            var elementBinders = renderProtoView.elementBinders;
-            var protoView = new AppProtoView(renderProtoView.render, protoChangeDetector, variableBindings);
-            this._createElementBinders(protoView, elementBinders, allDirectives);
-            this._bindDirectiveEvents(protoView, elementBinders);
-            return protoView;
-          },
-          _collectNestedProtoViewsVariableBindings: function(nestedPvsWithIndex) {
-            var $__0 = this;
-            return ListWrapper.map(nestedPvsWithIndex, (function(pvWithIndex) {
-              return $__0._createVariableBindings(pvWithIndex.renderProtoView);
-            }));
-          },
-          _createVariableBindings: function(renderProtoView) {
-            var variableBindings = MapWrapper.create();
-            MapWrapper.forEach(renderProtoView.variableBindings, (function(mappedName, varName) {
-              MapWrapper.set(variableBindings, varName, mappedName);
-            }));
-            ListWrapper.forEach(renderProtoView.elementBinders, (function(binder) {
-              MapWrapper.forEach(binder.variableBindings, (function(mappedName, varName) {
-                MapWrapper.set(variableBindings, varName, mappedName);
-              }));
-            }));
-            return variableBindings;
-          },
-          _collectNestedProtoViewsVariableNames: function(nestedPvsWithIndex, nestedPvVariableBindings) {
-            var $__0 = this;
-            var nestedPvVariableNames = ListWrapper.createFixedSize(nestedPvsWithIndex.length);
-            ListWrapper.forEach(nestedPvsWithIndex, (function(pvWithIndex) {
-              var parentVariableNames = isPresent(pvWithIndex.parentIndex) ? nestedPvVariableNames[pvWithIndex.parentIndex] : null;
-              nestedPvVariableNames[pvWithIndex.index] = $__0._createVariableNames(parentVariableNames, nestedPvVariableBindings[pvWithIndex.index]);
-            }));
-            return nestedPvVariableNames;
-          },
-          _createVariableNames: function(parentVariableNames, variableBindings) {
-            var variableNames = isPresent(parentVariableNames) ? ListWrapper.clone(parentVariableNames) : [];
-            MapWrapper.forEach(variableBindings, (function(local, v) {
-              ListWrapper.push(variableNames, local);
-            }));
-            return variableNames;
-          },
-          _createElementBinders: function(protoView, elementBinders, allDirectiveBindings) {
-            for (var i = 0; i < elementBinders.length; i++) {
-              var renderElementBinder = elementBinders[i];
-              var dirs = elementBinders[i].directives;
-              var parentPeiWithDistance = this._findParentProtoElementInjectorWithDistance(i, protoView.elementBinders, elementBinders);
-              var directiveBindings = ListWrapper.map(dirs, (function(dir) {
-                return allDirectiveBindings[dir.directiveIndex];
-              }));
-              var componentDirectiveBinding = null;
-              if (directiveBindings.length > 0) {
-                if (directiveBindings[0].metadata.type === renderApi.DirectiveMetadata.COMPONENT_TYPE) {
-                  componentDirectiveBinding = directiveBindings[0];
-                }
-              }
-              var protoElementInjector = this._createProtoElementInjector(i, parentPeiWithDistance, renderElementBinder, componentDirectiveBinding, directiveBindings);
-              this._createElementBinder(protoView, i, renderElementBinder, protoElementInjector, componentDirectiveBinding);
-            }
-          },
-          _findParentProtoElementInjectorWithDistance: function(binderIndex, elementBinders, renderElementBinders) {
-            var distance = 0;
-            do {
-              var renderElementBinder = renderElementBinders[binderIndex];
-              binderIndex = renderElementBinder.parentIndex;
-              if (binderIndex !== -1) {
-                distance += renderElementBinder.distanceToParent;
-                var elementBinder = elementBinders[binderIndex];
-                if (isPresent(elementBinder.protoElementInjector)) {
-                  return new ParentProtoElementInjectorWithDistance(elementBinder.protoElementInjector, distance);
-                }
-              }
-            } while (binderIndex !== -1);
-            return new ParentProtoElementInjectorWithDistance(null, -1);
-          },
-          _createProtoElementInjector: function(binderIndex, parentPeiWithDistance, renderElementBinder, componentDirectiveBinding, directiveBindings) {
-            var protoElementInjector = null;
-            var hasVariables = MapWrapper.size(renderElementBinder.variableBindings) > 0;
-            if (directiveBindings.length > 0 || hasVariables) {
-              protoElementInjector = new ProtoElementInjector(parentPeiWithDistance.protoElementInjector, binderIndex, directiveBindings, isPresent(componentDirectiveBinding), parentPeiWithDistance.distance);
-              protoElementInjector.attributes = renderElementBinder.readAttributes;
-              if (hasVariables) {
-                protoElementInjector.exportComponent = isPresent(componentDirectiveBinding);
-                protoElementInjector.exportElement = isBlank(componentDirectiveBinding);
-                var exportImplicitName = MapWrapper.get(renderElementBinder.variableBindings, '\$implicit');
-                if (isPresent(exportImplicitName)) {
-                  protoElementInjector.exportImplicitName = exportImplicitName;
-                }
-              }
-            }
-            return protoElementInjector;
-          },
-          _createElementBinder: function(protoView, boundElementIndex, renderElementBinder, protoElementInjector, componentDirectiveBinding) {
-            var parent = null;
-            if (renderElementBinder.parentIndex !== -1) {
-              parent = protoView.elementBinders[renderElementBinder.parentIndex];
-            }
-            var elBinder = protoView.bindElement(parent, renderElementBinder.distanceToParent, protoElementInjector, componentDirectiveBinding);
-            protoView.bindEvent(renderElementBinder.eventBindings, boundElementIndex, -1);
-            MapWrapper.forEach(renderElementBinder.variableBindings, (function(mappedName, varName) {
-              MapWrapper.set(protoView.protoLocals, mappedName, null);
-            }));
-            return elBinder;
-          },
-          _bindDirectiveEvents: function(protoView, elementBinders) {
-            for (var boundElementIndex = 0; boundElementIndex < elementBinders.length; ++boundElementIndex) {
-              var dirs = elementBinders[boundElementIndex].directives;
-              for (var i = 0; i < dirs.length; i++) {
-                var directiveBinder = dirs[i];
-                protoView.bindEvent(directiveBinder.eventBindings, boundElementIndex, i);
-              }
-            }
-          }
-        }, {});
+          }}, {});
       }());
       $__export("ProtoViewFactory", ProtoViewFactory);
       Object.defineProperty(ProtoViewFactory, "annotations", {get: function() {
@@ -12602,28 +12706,28 @@ System.register("angular2/src/core/compiler/proto_view_factory", ["angular2/src/
       Object.defineProperty(ProtoViewFactory, "parameters", {get: function() {
           return [[ChangeDetection]];
         }});
-      Object.defineProperty(ProtoViewFactory.prototype.getChangeDetectorDefinitions, "parameters", {get: function() {
-          return [[renderApi.DirectiveMetadata], [renderApi.ProtoViewDto], [assert.genericType(List, renderApi.DirectiveMetadata)]];
-        }});
       Object.defineProperty(ProtoViewFactory.prototype.createAppProtoViews, "parameters", {get: function() {
           return [[DirectiveBinding], [renderApi.ProtoViewDto], [assert.genericType(List, DirectiveBinding)]];
         }});
-      Object.defineProperty(ProtoViewFactory.prototype._collectNestedProtoViews, "parameters", {get: function() {
+      Object.defineProperty(getChangeDetectorDefinitions, "parameters", {get: function() {
+          return [[renderApi.DirectiveMetadata], [renderApi.ProtoViewDto], [assert.genericType(List, renderApi.DirectiveMetadata)]];
+        }});
+      Object.defineProperty(_collectNestedProtoViews, "parameters", {get: function() {
           return [[renderApi.ProtoViewDto], [assert.type.number], [], [assert.genericType(List, RenderProtoViewWithIndex)]];
         }});
-      Object.defineProperty(ProtoViewFactory.prototype._getChangeDetectorDefinitions, "parameters", {get: function() {
+      Object.defineProperty(_getChangeDetectorDefinitions, "parameters", {get: function() {
           return [[renderApi.DirectiveMetadata], [assert.genericType(List, RenderProtoViewWithIndex)], [assert.genericType(List, assert.genericType(List, assert.type.string))], [assert.genericType(List, renderApi.DirectiveMetadata)]];
         }});
-      Object.defineProperty(ProtoViewFactory.prototype._createAppProtoView, "parameters", {get: function() {
+      Object.defineProperty(_createAppProtoView, "parameters", {get: function() {
           return [[renderApi.ProtoViewDto], [ProtoChangeDetector], [assert.genericType(Map, assert.type.string, assert.type.string)], [assert.genericType(List, DirectiveBinding)]];
         }});
-      Object.defineProperty(ProtoViewFactory.prototype._collectNestedProtoViewsVariableBindings, "parameters", {get: function() {
+      Object.defineProperty(_collectNestedProtoViewsVariableBindings, "parameters", {get: function() {
           return [[assert.genericType(List, RenderProtoViewWithIndex)]];
         }});
-      Object.defineProperty(ProtoViewFactory.prototype._collectNestedProtoViewsVariableNames, "parameters", {get: function() {
+      Object.defineProperty(_collectNestedProtoViewsVariableNames, "parameters", {get: function() {
           return [[assert.genericType(List, RenderProtoViewWithIndex)], [assert.genericType(List, assert.genericType(Map, assert.type.string, assert.type.string))]];
         }});
-      Object.defineProperty(ProtoViewFactory.prototype._bindDirectiveEvents, "parameters", {get: function() {
+      Object.defineProperty(_bindDirectiveEvents, "parameters", {get: function() {
           return [[], [assert.genericType(List, renderApi.ElementBinder)]];
         }});
       RenderProtoViewWithIndex = (function() {
@@ -16385,7 +16489,6 @@ System.register("angular2/src/forms/directives", ["angular2/src/core/annotations
   "use strict";
   var __moduleName = "angular2/src/forms/directives";
   var Directive,
-      onChange,
       Ancestor,
       ElementRef,
       Optional,
@@ -16393,18 +16496,34 @@ System.register("angular2/src/forms/directives", ["angular2/src/core/annotations
       isPresent,
       isString,
       CONST_EXPR,
+      isBlank,
+      BaseException,
       ListWrapper,
       ControlGroup,
+      Control,
+      isControl,
       Validators,
       DefaultValueAccessor,
       CheckboxControlValueAccessor,
       ControlDirective,
       ControlGroupDirective,
       formDirectives;
+  function _lookupControl(groupDirective, controlOrName) {
+    if (isControl(controlOrName)) {
+      return controlOrName;
+    }
+    if (isBlank(groupDirective)) {
+      throw new BaseException(("No control group found for \"" + controlOrName + "\""));
+    }
+    var control = groupDirective.findControl(controlOrName);
+    if (isBlank(control)) {
+      throw new BaseException(("Cannot find control \"" + controlOrName + "\""));
+    }
+    return control;
+  }
   return {
     setters: [function($__m) {
       Directive = $__m.Directive;
-      onChange = $__m.onChange;
     }, function($__m) {
       Ancestor = $__m.Ancestor;
     }, function($__m) {
@@ -16417,14 +16536,21 @@ System.register("angular2/src/forms/directives", ["angular2/src/core/annotations
       isPresent = $__m.isPresent;
       isString = $__m.isString;
       CONST_EXPR = $__m.CONST_EXPR;
+      isBlank = $__m.isBlank;
+      BaseException = $__m.BaseException;
     }, function($__m) {
       ListWrapper = $__m.ListWrapper;
     }, function($__m) {
       ControlGroup = $__m.ControlGroup;
+      Control = $__m.Control;
+      isControl = $__m.isControl;
     }, function($__m) {
       Validators = $__m.Validators;
     }],
     execute: function() {
+      Object.defineProperty(_lookupControl, "parameters", {get: function() {
+          return [[ControlGroupDirective], [assert.type.any]];
+        }});
       DefaultValueAccessor = (function() {
         function DefaultValueAccessor() {
           this.onChange = (function(_) {});
@@ -16469,15 +16595,13 @@ System.register("angular2/src/forms/directives", ["angular2/src/core/annotations
       ControlDirective = (function() {
         function ControlDirective(groupDirective, valueAccessor) {
           this._groupDirective = groupDirective;
-          this.controlOrName = null;
+          this._controlOrName = null;
           this.valueAccessor = valueAccessor;
           this.validator = Validators.nullValidator;
         }
         return ($traceurRuntime.createClass)(ControlDirective, {
-          onChange: function(_) {
-            this._initialize();
-          },
-          _initialize: function() {
+          set controlOrName(controlOrName) {
+            this._controlOrName = controlOrName;
             if (isPresent(this._groupDirective)) {
               this._groupDirective.addDirective(this);
             }
@@ -16496,18 +16620,13 @@ System.register("angular2/src/forms/directives", ["angular2/src/core/annotations
             });
           },
           _control: function() {
-            if (isString(this.controlOrName)) {
-              return this._groupDirective.findControl(this.controlOrName);
-            } else {
-              return this.controlOrName;
-            }
+            return _lookupControl(this._groupDirective, this._controlOrName);
           }
         }, {});
       }());
       $__export("ControlDirective", ControlDirective);
       Object.defineProperty(ControlDirective, "annotations", {get: function() {
           return [new Directive({
-            lifecycle: [onChange],
             selector: '[control]',
             properties: {'controlOrName': 'control'}
           })];
@@ -16521,12 +16640,8 @@ System.register("angular2/src/forms/directives", ["angular2/src/core/annotations
           this._directives = ListWrapper.create();
         }
         return ($traceurRuntime.createClass)(ControlGroupDirective, {
-          set controlGroup(controlGroup) {
-            if (isString(controlGroup)) {
-              this._controlGroupName = controlGroup;
-            } else {
-              this._controlGroup = controlGroup;
-            }
+          set controlOrName(controlOrName) {
+            this._controlOrName = controlOrName;
             this._updateDomValue();
           },
           _updateDomValue: function() {
@@ -16541,11 +16656,7 @@ System.register("angular2/src/forms/directives", ["angular2/src/core/annotations
             return this._getControlGroup().controls[name];
           },
           _getControlGroup: function() {
-            if (isPresent(this._controlGroupName)) {
-              return this._groupDirective.findControl(this._controlGroupName);
-            } else {
-              return this._controlGroup;
-            }
+            return _lookupControl(this._groupDirective, this._controlOrName);
           }
         }, {});
       }());
@@ -16553,7 +16664,7 @@ System.register("angular2/src/forms/directives", ["angular2/src/core/annotations
       Object.defineProperty(ControlGroupDirective, "annotations", {get: function() {
           return [new Directive({
             selector: '[control-group]',
-            properties: {'controlGroup': 'control-group'}
+            properties: {'controlOrName': 'control-group'}
           })];
         }});
       Object.defineProperty(ControlGroupDirective, "parameters", {get: function() {
@@ -17388,7 +17499,7 @@ System.register("angular2/src/change_detection/change_detection_util", ["angular
       ChangeDetectionUtil = (function() {
         function ChangeDetectionUtil() {}
         return ($traceurRuntime.createClass)(ChangeDetectionUtil, {}, {
-          unitialized: function() {
+          uninitialized: function() {
             return uninitialized;
           },
           arrayFn0: function() {
@@ -19597,9 +19708,7 @@ System.register("angular2/src/render/dom/compiler/directive_parser", ["angular2/
               }
               if (isPresent(directive.hostAttributes)) {
                 MapWrapper.forEach(directive.hostAttributes, (function(hostAttrValue, hostAttrName) {
-                  if (!DOM.hasAttribute(current.element, hostAttrName)) {
-                    DOM.setAttribute(current.element, hostAttrName, hostAttrValue);
-                  }
+                  $__0._addHostAttribute(hostAttrName, hostAttrValue, current);
                 }));
               }
               if (isPresent(directive.readAttributes)) {
@@ -19640,6 +19749,15 @@ System.register("angular2/src/render/dom/compiler/directive_parser", ["angular2/
           _bindHostProperty: function(hostPropertyName, directivePropertyName, compileElement, directiveBinderBuilder) {
             var ast = this._parser.parseBinding(directivePropertyName, ("hostProperties of " + compileElement.elementDescription));
             directiveBinderBuilder.bindHostProperty(hostPropertyName, ast);
+          },
+          _addHostAttribute: function(attrName, attrValue, compileElement) {
+            if (StringWrapper.equals(attrName, 'class')) {
+              ListWrapper.forEach(attrValue.split(' '), (function(className) {
+                DOM.addClass(compileElement.element, className);
+              }));
+            } else if (!DOM.hasAttribute(compileElement.element, attrName)) {
+              DOM.setAttribute(compileElement.element, attrName, attrValue);
+            }
           },
           _splitBindConfig: function(bindConfig) {
             return ListWrapper.map(bindConfig.split('|'), (function(s) {
@@ -19759,6 +19877,10 @@ System.register("angular2/src/forms/model", ["angular2/src/facade/lang", "angula
       Control,
       ControlGroup,
       ControlArray;
+  function isControl(c) {
+    return c instanceof AbstractControl;
+  }
+  $__export("isControl", isControl);
   return {
     setters: [function($__m) {
       isPresent = $__m.isPresent;
@@ -19779,6 +19901,9 @@ System.register("angular2/src/forms/model", ["angular2/src/facade/lang", "angula
       $__export("VALID", VALID);
       INVALID = "INVALID";
       $__export("INVALID", INVALID);
+      Object.defineProperty(isControl, "parameters", {get: function() {
+          return [[Object]];
+        }});
       AbstractControl = (function() {
         function AbstractControl(validator) {
           this.validator = validator;
@@ -22302,8 +22427,8 @@ System.register("angular2/src/change_detection/parser/parser", ["angular2/src/di
 System.register("angular2/src/change_detection/proto_change_detector", ["angular2/src/facade/lang", "angular2/src/facade/collection", "angular2/src/change_detection/parser/ast", "angular2/src/change_detection/interfaces", "angular2/src/change_detection/change_detection_util", "angular2/src/change_detection/dynamic_change_detector", "angular2/src/change_detection/change_detection_jit_generator", "angular2/src/change_detection/directive_record", "angular2/src/change_detection/coalesce", "angular2/src/change_detection/proto_record"], function($__export) {
   "use strict";
   var __moduleName = "angular2/src/change_detection/proto_change_detector";
-  var isPresent,
-      BaseException,
+  var BaseException,
+      isPresent,
       isString,
       ListWrapper,
       ImplicitReceiver,
@@ -22484,8 +22609,8 @@ System.register("angular2/src/change_detection/proto_change_detector", ["angular
   }
   return {
     setters: [function($__m) {
-      isPresent = $__m.isPresent;
       BaseException = $__m.BaseException;
+      isPresent = $__m.isPresent;
       isString = $__m.isString;
     }, function($__m) {
       ListWrapper = $__m.ListWrapper;
@@ -22571,30 +22696,28 @@ System.register("angular2/src/change_detection/proto_change_detector", ["angular
         }
         return ($traceurRuntime.createClass)(ProtoRecordBuilder, {addAst: function(b) {
             var variableNames = arguments[1] !== (void 0) ? arguments[1] : null;
-            var last = ListWrapper.last(this.records);
-            if (isPresent(last) && last.bindingRecord.directiveRecord == b.directiveRecord) {
-              last.lastInDirective = false;
+            var oldLast = ListWrapper.last(this.records);
+            if (isPresent(oldLast) && oldLast.bindingRecord.directiveRecord == b.directiveRecord) {
+              oldLast.lastInDirective = false;
             }
-            var pr = _ConvertAstIntoProtoRecords.convert(b, this.records.length, variableNames);
-            if (!ListWrapper.isEmpty(pr)) {
-              var last = ListWrapper.last(pr);
-              last.lastInBinding = true;
-              last.lastInDirective = true;
-              this.records = ListWrapper.concat(this.records, pr);
+            _ConvertAstIntoProtoRecords.append(this.records, b, variableNames);
+            var newLast = ListWrapper.last(this.records);
+            if (isPresent(newLast) && newLast !== oldLast) {
+              newLast.lastInBinding = true;
+              newLast.lastInDirective = true;
             }
           }}, {});
       }());
       _ConvertAstIntoProtoRecords = (function() {
-        function _ConvertAstIntoProtoRecords(bindingRecord, contextIndex, expressionAsString, variableNames) {
-          this.bindingRecord = bindingRecord;
-          this.contextIndex = contextIndex;
-          this.expressionAsString = expressionAsString;
-          this.variableNames = variableNames;
-          this.protoRecords = [];
+        function _ConvertAstIntoProtoRecords(_records, _bindingRecord, _expressionAsString, _variableNames) {
+          this._records = _records;
+          this._bindingRecord = _bindingRecord;
+          this._expressionAsString = _expressionAsString;
+          this._variableNames = _variableNames;
         }
         return ($traceurRuntime.createClass)(_ConvertAstIntoProtoRecords, {
           visitImplicitReceiver: function(ast) {
-            return this.bindingRecord.implicitReceiver;
+            return this._bindingRecord.implicitReceiver;
           },
           visitInterpolation: function(ast) {
             var args = this._visitAll(ast.expressions);
@@ -22605,17 +22728,16 @@ System.register("angular2/src/change_detection/proto_change_detector", ["angular
           },
           visitAccessMember: function(ast) {
             var receiver = ast.receiver.visit(this);
-            if (isPresent(this.variableNames) && ListWrapper.contains(this.variableNames, ast.name) && ast.receiver instanceof ImplicitReceiver) {
+            if (isPresent(this._variableNames) && ListWrapper.contains(this._variableNames, ast.name) && ast.receiver instanceof ImplicitReceiver) {
               return this._addRecord(RECORD_TYPE_LOCAL, ast.name, ast.name, [], null, receiver);
             } else {
               return this._addRecord(RECORD_TYPE_PROPERTY, ast.name, ast.getter, [], null, receiver);
             }
           },
           visitMethodCall: function(ast) {
-            ;
             var receiver = ast.receiver.visit(this);
             var args = this._visitAll(ast.args);
-            if (isPresent(this.variableNames) && ListWrapper.contains(this.variableNames, ast.name)) {
+            if (isPresent(this._variableNames) && ListWrapper.contains(this._variableNames, ast.name)) {
               var target = this._addRecord(RECORD_TYPE_LOCAL, ast.name, ast.name, [], null, receiver);
               return this._addRecord(RECORD_TYPE_INVOKE_CLOSURE, "closure", null, args, null, target);
             } else {
@@ -22667,25 +22789,24 @@ System.register("angular2/src/change_detection/proto_change_detector", ["angular
             return res;
           },
           _addRecord: function(type, name, funcOrValue, args, fixedArgs, context) {
-            var selfIndex = ++this.contextIndex;
+            var selfIndex = this._records.length + 1;
             if (context instanceof DirectiveIndex) {
-              ListWrapper.push(this.protoRecords, new ProtoRecord(type, name, funcOrValue, args, fixedArgs, -1, context, selfIndex, this.bindingRecord, this.expressionAsString, false, false));
+              ListWrapper.push(this._records, new ProtoRecord(type, name, funcOrValue, args, fixedArgs, -1, context, selfIndex, this._bindingRecord, this._expressionAsString, false, false));
             } else {
-              ListWrapper.push(this.protoRecords, new ProtoRecord(type, name, funcOrValue, args, fixedArgs, context, null, selfIndex, this.bindingRecord, this.expressionAsString, false, false));
+              ListWrapper.push(this._records, new ProtoRecord(type, name, funcOrValue, args, fixedArgs, context, null, selfIndex, this._bindingRecord, this._expressionAsString, false, false));
             }
             return selfIndex;
           }
-        }, {convert: function(b, contextIndex, variableNames) {
-            var c = new _ConvertAstIntoProtoRecords(b, contextIndex, b.ast.toString(), variableNames);
+        }, {append: function(records, b, variableNames) {
+            var c = new _ConvertAstIntoProtoRecords(records, b, b.ast.toString(), variableNames);
             b.ast.visit(c);
-            return c.protoRecords;
           }});
       }());
     }
   };
 });
 
-System.register("angular2/src/change_detection/change_detection", ["angular2/src/change_detection/proto_change_detector", "angular2/src/change_detection/pipes/pipe_registry", "angular2/src/change_detection/pipes/iterable_changes", "angular2/src/change_detection/pipes/keyvalue_changes", "angular2/src/change_detection/pipes/observable_pipe", "angular2/src/change_detection/pipes/promise_pipe", "angular2/src/change_detection/pipes/uppercase_pipe", "angular2/src/change_detection/pipes/lowercase_pipe", "angular2/src/change_detection/pipes/null_pipe", "angular2/src/change_detection/interfaces", "angular2/src/di/decorators", "angular2/src/facade/collection", "angular2/src/facade/lang"], function($__export) {
+System.register("angular2/src/change_detection/change_detection", ["angular2/src/change_detection/proto_change_detector", "angular2/src/change_detection/pipes/pipe_registry", "angular2/src/change_detection/pipes/iterable_changes", "angular2/src/change_detection/pipes/keyvalue_changes", "angular2/src/change_detection/pipes/observable_pipe", "angular2/src/change_detection/pipes/promise_pipe", "angular2/src/change_detection/pipes/uppercase_pipe", "angular2/src/change_detection/pipes/lowercase_pipe", "angular2/src/change_detection/pipes/json_pipe", "angular2/src/change_detection/pipes/null_pipe", "angular2/src/change_detection/interfaces", "angular2/src/di/decorators", "angular2/src/facade/collection", "angular2/src/facade/lang"], function($__export) {
   "use strict";
   var __moduleName = "angular2/src/change_detection/change_detection";
   var __decorate,
@@ -22699,6 +22820,7 @@ System.register("angular2/src/change_detection/change_detection", ["angular2/src
       PromisePipeFactory,
       UpperCaseFactory,
       LowerCaseFactory,
+      JsonPipeFactory,
       NullPipeFactory,
       ChangeDetection,
       Injectable,
@@ -22710,6 +22832,7 @@ System.register("angular2/src/change_detection/change_detection", ["angular2/src
       async,
       uppercase,
       lowercase,
+      json,
       defaultPipes,
       preGeneratedProtoDetectors,
       PreGeneratedChangeDetection,
@@ -22734,6 +22857,8 @@ System.register("angular2/src/change_detection/change_detection", ["angular2/src
       UpperCaseFactory = $__m.UpperCaseFactory;
     }, function($__m) {
       LowerCaseFactory = $__m.LowerCaseFactory;
+    }, function($__m) {
+      JsonPipeFactory = $__m.JsonPipeFactory;
     }, function($__m) {
       NullPipeFactory = $__m.NullPipeFactory;
     }, function($__m) {
@@ -22780,12 +22905,15 @@ System.register("angular2/src/change_detection/change_detection", ["angular2/src
       $__export("uppercase", uppercase);
       lowercase = [new LowerCaseFactory(), new NullPipeFactory()];
       $__export("lowercase", lowercase);
+      json = [new JsonPipeFactory(), new NullPipeFactory()];
+      $__export("json", json);
       defaultPipes = {
         "iterableDiff": iterableDiff,
         "keyValDiff": keyValDiff,
         "async": async,
         "uppercase": uppercase,
-        "lowercase": lowercase
+        "lowercase": lowercase,
+        "json": json
       };
       $__export("defaultPipes", defaultPipes);
       preGeneratedProtoDetectors = {};
@@ -24764,6 +24892,9 @@ System.register("angular2/src/core/compiler/element_injector", ["angular2/src/fa
             }
             if (dep.key.id === StaticKeys.instance().protoViewId) {
               if (isBlank(this._preBuiltObjects.protoView)) {
+                if (dep.optional) {
+                  return null;
+                }
                 throw new NoBindingError(dep.key);
               }
               return new ProtoViewRef(this._preBuiltObjects.protoView);
