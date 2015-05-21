@@ -11,7 +11,6 @@ if (typeof __metadata !== "function") __metadata = function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var angular2_1 = require('angular2/angular2');
-var router_1 = require('angular2/router');
 var Base = (function () {
     function Base() {
         this.name = "base";
@@ -21,8 +20,7 @@ var Base = (function () {
             selector: 'base'
         }),
         angular2_1.View({
-            directives: [router_1.RouterLink],
-            template: 'Hello {{name}} <a router-link="dashboard">dashboard</a>'
+            template: 'Hello {{name}}'
         }), 
         __metadata('design:paramtypes', [])
     ], Base);

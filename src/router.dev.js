@@ -343,7 +343,7 @@ System.register("angular2/src/router/router_link", ["angular2/src/core/annotatio
           this._params = StringMapWrapper.create();
           DOM.on(this._domEl, 'click', (function(evt) {
             evt.preventDefault();
-            $__0._router.navigate($__0._href);
+            $__0._router.navigate($__0._navigationHref);
           }));
         }
         return ($traceurRuntime.createClass)(RouterLink, {
@@ -355,9 +355,9 @@ System.register("angular2/src/router/router_link", ["angular2/src/core/annotatio
           },
           onAllChangesDone: function() {
             if (isPresent(this._route) && isPresent(this._params)) {
-              var newHref = this._router.generate(this._route, this._params);
-              this._href = this._location.normalizeAbsolutely(newHref);
-              DOM.setAttribute(this._domEl, 'href', this._href);
+              this._navigationHref = this._router.generate(this._route, this._params);
+              this._visibleHref = this._location.normalizeAbsolutely(this._navigationHref);
+              DOM.setAttribute(this._domEl, 'href', this._visibleHref);
             }
           }
         }, {});
@@ -1088,14 +1088,16 @@ System.register("angular2/src/router/router_outlet", ["angular2/src/facade/async
           this._injector = injector;
           this._childRouter = null;
           this._componentRef = null;
+          this._currentInstruction = null;
           this._parentRouter.registerOutlet(this, nameAttr);
         }
         return ($traceurRuntime.createClass)(RouterOutlet, {
           activate: function(instruction) {
             var $__0 = this;
-            if (instruction.reuse && isPresent(this._childRouter)) {
+            if ((instruction == this._currentInstruction) || instruction.reuse && isPresent(this._childRouter)) {
               return this._childRouter.commit(instruction);
             }
+            this._currentInstruction = instruction;
             this._childRouter = this._parentRouter.childRouter(instruction.component);
             var outletInjector = this._injector.resolveAndCreateChild([bind(RouteParams).toValue(new RouteParams(instruction.params)), bind(routerMod.Router).toValue(this._childRouter)]);
             if (isPresent(this._componentRef)) {
@@ -1384,7 +1386,7 @@ System.register("angular2/router", ["angular2/src/router/router", "angular2/src/
       RouteRegistry,
       Pipeline,
       Location,
-      appComponentRefToken,
+      appComponentTypeToken,
       bind,
       routerInjectables;
   var $__exportNames = {
@@ -1425,14 +1427,14 @@ System.register("angular2/router", ["angular2/src/router/router", "angular2/src/
     }, function($__m) {
       Location = $__m.Location;
     }, function($__m) {
-      appComponentRefToken = $__m.appComponentRefToken;
+      appComponentTypeToken = $__m.appComponentTypeToken;
     }, function($__m) {
       bind = $__m.bind;
     }],
     execute: function() {
-      routerInjectables = [RouteRegistry, Pipeline, BrowserLocation, Location, bind(Router).toFactory((function(registry, pipeline, location, app) {
-        return new RootRouter(registry, pipeline, location, app.hostComponentType);
-      }), [RouteRegistry, Pipeline, Location, appComponentRefToken])];
+      routerInjectables = [RouteRegistry, Pipeline, BrowserLocation, Location, bind(Router).toFactory((function(registry, pipeline, location, appRoot) {
+        return new RootRouter(registry, pipeline, location, appRoot);
+      }), [RouteRegistry, Pipeline, Location, appComponentTypeToken])];
       $__export("routerInjectables", routerInjectables);
     }
   };

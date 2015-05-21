@@ -23,8 +23,8 @@ var App = (function () {
             selector: 'app'
         }),
         angular2_1.View({
-            template: '<router-outlet></router-outlet>',
-            directives: [router_1.RouterOutlet]
+            directives: [router_1.RouterOutlet, router_1.RouterLink],
+            template: "\n\t\t<a router-link=\"base\">base</a>\n\t\t<a router-link=\"dashboard\">dashboard</a>\n\t\t<a router-link=\"login\">login</a>\n\t\t<br>\n\t\t<router-outlet></router-outlet>\n\t"
         }),
         router_1.RouteConfig([
             { path: '/', component: base_1.Base, as: 'base' },
